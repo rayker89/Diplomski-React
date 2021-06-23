@@ -1,0 +1,49 @@
+import React, { Component } from "react";
+import Table from 'react-bootstrap/Table';
+import DataTable from './data-table-outgoing-call-templ';
+
+
+import OutgoingCallService from "../services/outgoing-call.service";
+
+export default class OutgoingCallTemplate extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      template: []
+    }
+  }
+  componentDidMount() {
+    OutgoingCallService.getOutgoingCallTemplate()
+    .then(res => {
+      this.setState({ template: res.data });
+  })
+  .catch(function (error) {
+      console.log(error);
+  })
+  }
+
+  dataTable() {
+    return this.state.template.map((data, i) => {
+        return <DataTable obj={data} key={i} />;
+    });
+}
+
+  render() {
+    return (
+      <Table striped bordered hover variant="dark">
+      <thead>
+        <tr>
+          <th>R.br.</th>
+          <th>Naziv</th>
+          <th>Odgovori</th>
+        </tr>
+      </thead>
+      <tbody>
+        {this.dataTable()}
+      </tbody>
+    </Table>
+    
+    );
+  }
+}

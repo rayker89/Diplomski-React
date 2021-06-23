@@ -1,0 +1,34 @@
+import axios from "axios";
+import authHeader from "./auth-header";
+
+const API_URL = "http://localhost:8080/api/outgoing/";
+
+class OutgoingCallService {
+
+  getOutgoingCallTemplate() {
+    return axios.get(API_URL + "outgoingCallTemplate", {
+      headers: authHeader(),
+    });
+  }
+
+  createTemplate(template){
+    return axios.post(API_URL + "outgoingCallTemplate", template);
+}
+
+
+  postFormData(formData){
+    return axios.post(API_URL + "postOutgoingCallList", formData, {
+      headers: {
+        "content-type": "multipart/form-data",
+      },
+    });
+  }
+
+  getOutgoingCallTemplateListImport(){
+    return axios.get(API_URL+"outgoingCallList",{
+      headers:authHeader(),
+    });
+  }
+}
+
+export default new OutgoingCallService();

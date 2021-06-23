@@ -1,0 +1,210 @@
+import React, { Component } from "react";
+import { Form, InputGroup, Button, FormControl } from "react-bootstrap";
+
+import OutgoingCallService from "../services/outgoing-call.service";
+
+import Template from "./../template-files/Template.xlsx";
+
+export default class OutgoingCallListImport extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      message: "Kreiranje liste odlaznih poziva",
+      selectedFile:null,
+      isFileSelected:false,
+      templateList:[],
+      selectedTemplate:0,
+      listName:"",
+      note:"",
+      oldList:false,
+    };
+    this.fileSelectedHandler = this.fileSelectedHandler.bind(this);
+    this.fileUploadHandler = this.fileUploadHandler.bind(this);
+    this.handleOnChange=this.handleOnChange.bind(this)
+    this.handleEvents=this.handleEvents.bind(this)
+    this.radioBtnOnChange=this.radioBtnOnChange.bind(this)
+  }
+
+  componentDidMount() {
+    OutgoingCallService.getOutgoingCallTemplateListImport().then(
+      (res) => {
+        this.setState({
+          templateList: res.data,
+        });
+      },
+      (error) => {
+        this.setState({
+          message:
+            (error.response &&
+              error.response.data &&
+              error.response.data.message) ||
+            error.message ||
+            error.toString(),
+        });
+      }
+    );
+  }
+
+  fileSelectedHandler(event) {
+    console.log(event.target.files[0]);
+    this.setState({
+      selectedFile: event.target.files[0],
+      isFileSelected: true,
+    });
+  }
+
+  fileUploadHandler() {
+    //salje fajl na backend
+    console.log("Upload is triggered");
+
+    const formData = new FormData();
+
+    formData.append("file", this.state.selectedFile);
+    formData.append("templateId", this.state.selectedTemplate);
+    formData.append("name",this.state.listName);
+    formData.append("note",this.state.note);
+
+    if (this.state.selectedFile != null) {
+      OutgoingCallService.postFormData(formData).then(
+        (response) => {
+          this.setState({
+            message: response.data.message,
+          });
+        },
+        (error) => {
+          const resMessage =
+            (error.response &&
+              error.response.data &&
+              error.response.data.message) ||
+            error.message ||
+            error.toString();
+          this.setState({
+            message: resMessage,
+          });
+        }
+      );
+    }
+  }
+
+  handleOnChange(event){
+    this.setState({
+      selectedTemplate:event.target.value,
+    })
+  }
+
+  handleEvents(event){
+    this.setState({
+      [event.target.name]:event.target.value
+    })
+  }
+
+  radioBtnOnChange(event){
+    const oldList = event.currentTarget.value === 'true' ? true: false;
+    this.setState({
+      oldList
+    })
+  }
+
+  render() {
+
+
+    return (
+      <div className="container">
+        <header className="jumbotron">
+          <h3>{this.state.message}</h3>
+        </header>
+        <Form onSubmit={this.fileUploadHandler}>
+          <Form.Row>
+            <Form.Group controlId="template">
+              <Form.Label>Tip odlaznog poziva</Form.Label>
+              <Form.Control as="select" onChange={this.handleOnChange}  value={this.state.selectedTemplate}>
+                {this.state.templateList &&
+                this.state.templateList.length > 0 &&
+                this.state.templateList.map(templateList => {
+                  return <option key={templateList.id} value={templateList.id}>{templateList.name}</option>;
+              })}
+              </Form.Control>
+            </Form.Group>
+          </Form.Row>
+
+          <Form.Row>    
+          <Form.Group controlId="formGridPassword" value={this.state.oldList}>
+            <input type="radio" name="list" value="false" 
+              onChange={this.radioBtnOnChange} /> Nova lista
+              <br></br>
+              <input type="radio" name="list" value="true" 
+              onChange={this.radioBtnOnChange} /> Dopuni listu
+          </Form.Group>
+          </Form.Row>  
+
+
+          {/* <FormControl component="fieldset">
+              <RadioGroup row aria-label="list" name="list" value={this.state.oldList} onChange={this.radioBtnOnChange}>
+                <FormControlLabel value={false} control={<Radio />} label="Nova lista" />
+                <FormControlLabel value={true} control={<Radio />} label="Dopuni listu" />
+              </RadioGroup>
+          </FormControl>  */}
+
+
+          
+
+          {this.state.oldList &&
+          (
+            <Form.Group controlId="template">
+              <Form.Label>Liste odabranog sablona</Form.Label>
+              <Form.Control as="select" onChange={this.handleOnChange}  value={this.state.selectedTemplate}>
+                {this.state.templateList &&
+                this.state.templateList.length > 0 &&
+                this.state.templateList.map(templateList => {
+                  return <option key={templateList.id} value={templateList.id}>{templateList.name}</option>;
+              })}
+              </Form.Control>
+            </Form.Group>
+          )
+          }
+
+          {!this.state.oldList && (
+          <Form.Group controlId="description">
+            <InputGroup>
+              <InputGroup.Prepend>
+                <InputGroup.Text>Naziv liste</InputGroup.Text>
+              </InputGroup.Prepend>
+              <FormControl as="textarea" aria-label="text input" onChange={this.handleEvents} value={this.state.listName} name="listName"/>
+            </InputGroup>
+          </Form.Group>
+          )}
+
+          <Form.Group controlId="description">
+            <InputGroup>
+              <InputGroup.Prepend>
+                <InputGroup.Text>Napomena</InputGroup.Text>
+              </InputGroup.Prepend>
+              <FormControl as="textarea" aria-label="With textarea" onChange={this.handleEvents} value={this.state.note} name="note"/>
+            </InputGroup>
+          </Form.Group>
+
+          <Form.Row>
+            <Form.Group controlId="xlsFile">
+              <Form.Label>Spisak za zvanje</Form.Label>
+              <input
+                type="file"
+                name="file"
+                onChange={this.fileSelectedHandler}
+              />
+            </Form.Group>
+          </Form.Row>
+
+          <Button variant="primary" type="submit">
+            Uvezi
+          </Button>
+
+          <Form.Group>
+            <a href={Template} download="template.xlsx" target="_blank">
+              <Button>Preuzmi sablon</Button>
+            </a>
+          </Form.Group>
+        </Form>
+      </div>
+    );
+  }
+}

@@ -1,0 +1,43 @@
+import React, { Component } from "react";
+
+import OutgoingCallService from "../services/outgoing-call.service";
+
+export default class OutgoingCallListImport extends Component{
+
+    constructor(props){
+        super(props);
+        this.state={
+            message:""
+        }
+    }
+
+    componentDidMount(){
+        OutgoingCallService.getOutgoingCallListImport().then(res=>{
+            this.setState(
+                {
+                    message:res.data
+                }
+            )
+        },
+        error => {
+        this.setState({
+          message:
+            (error.response &&
+              error.response.data &&
+              error.response.data.message) ||
+            error.message ||
+            error.toString()
+        });
+      })
+    }
+
+    render(){
+        return (
+            <div className="container">
+                <header className="jumbotron">
+                    <h3>{this.state.message}</h3>
+                </header>
+            </div>
+        )
+    }
+}

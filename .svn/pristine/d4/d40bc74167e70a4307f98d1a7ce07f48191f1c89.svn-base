@@ -1,0 +1,116 @@
+import React, { Component } from "react";
+import BootstrapTable from 'react-bootstrap-table-next';
+import "react-bootstrap-table-next/dist/react-bootstrap-table2.min.css";
+
+
+import OutgoingCallService from "../services/outgoing-call.service";
+
+export default class OutgoingCallTemplate extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      template: [],
+      columns: [{
+        dataField: 'id',
+        text: 'R.br.',
+        sort: true
+      }, {
+        dataField: 'name',
+        text: 'Naziv',
+        sort: true
+      }
+      ]
+    }
+    this.addTemplate = this.addTemplate.bind(this);
+  };
+
+  addTemplate() {
+    this.props.history.push('/outgoingCallTemplate/new');
+  };
+
+  componentDidMount() {
+    OutgoingCallService.getOutgoingCallTemplate()
+      .then(res => {
+        this.setState({ template: res.data });
+      })
+      .catch(function (error) {
+        console.log(error);
+      })
+  };
+
+  render() {
+    return (
+      <div>
+        <p className="Table-header">Templejti odlaznih poziva</p>
+
+        <div className="row">
+          <button className="btn btn-primary" onClick={this.addTemplate}> Add Template</button>
+        </div>
+        <br></br>
+
+        <BootstrapTable
+          keyField='id'
+          data={this.state.template}
+          columns={this.state.columns}
+          expandRow={expandRow}
+          striped
+          bordered
+          size="sm" />
+      </div>
+    );
+  }
+}
+const expandRow = {
+  showExpandColumn: true,
+  onlyOneExpanding: true,
+  expandByColumnOnly: true,
+  expandColumnPosition: 'right',
+  expandHeaderColumnRenderer: ({ isAnyExpands }) => {
+    if (isAnyExpands) {
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-up" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z" />
+        </svg>
+      );
+    }
+    return (
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-down" viewBox="0 0 16 16">
+        <path fill-rule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z" />
+      </svg>
+    );
+  },
+  expandColumnRenderer: ({ expanded }) => {
+    if (expanded) {
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-up" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z" />
+        </svg>
+      );
+    }
+    return (
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-down" viewBox="0 0 16 16">
+        <path fill-rule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z" />
+      </svg>
+    );
+  },
+
+  renderer: row => <table>
+    {row.predefinedResultList.map((item =>
+      <tr key={item}>
+        <td>{item}</td>
+        <td> <button className="btn btn-danger">Ukloni</button></td>
+      </tr>
+    ))}
+
+    <tr>
+      <div>
+        <input placeholder="Novi odgovor..." >
+        </input>
+      </div>
+
+    </tr>
+
+  </table>
+}
+

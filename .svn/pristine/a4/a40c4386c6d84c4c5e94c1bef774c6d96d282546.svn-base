@@ -1,0 +1,28 @@
+import axios from "axios";
+import authHeader from "./auth-header";
+
+const API_URL = "http://localhost:8080/api/outgoing/";
+
+class OutgoingCallService {
+  getOutgoingCallTemplate() {
+    return axios.get(API_URL + "outgoingCallTemplate", {
+      headers: authHeader(),
+    });
+  }
+
+  getOutgoingCallListImport() {
+    return axios.get(API_URL + "outgoingCallListImport", {
+      headers: authHeader(),
+    });
+  }
+
+  postExcelFile(formData) {
+    return axios.post(API_URL + "postExcelFile", formData, {
+      headers: {
+        "content-type": "multipart/form-data",
+      },
+    });
+  }
+}
+
+export default new OutgoingCallService();

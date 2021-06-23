@@ -1,0 +1,266 @@
+import React, { Component } from "react";
+import { Form, InputGroup, Button, FormControl } from "react-bootstrap";
+import OutgoingCallService from "../services/outgoing-call.service";
+
+import Template from "./../template-files/Template.xlsx";
+
+import './../styles/errors.css'
+
+//const validEmailRegex = RegExp(/^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i);
+
+
+export default class OutgoingCallListImport extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      message: "Kreiranje liste odlaznih poziva",
+      selectedFile:null,
+      templateList:[],
+      selectedTemplate:0,
+      listName:"",
+      note:"",
+      oldList:false,
+      oldListNames:[],
+    };
+    this.fileSelectedHandler = this.fileSelectedHandler.bind(this);
+    this.submitForm = this.submitForm.bind(this);
+    this.handleOnChange=this.handleOnChange.bind(this)
+    this.handleEvents=this.handleEvents.bind(this)
+    this.radioBtnOnChange=this.radioBtnOnChange.bind(this)
+    this.showOldLists=this.showOldLists.bind(this)
+    this.handleOldOnChange=this.handleOldOnChange.bind(this)
+  }
+
+  /*Loading template list*/
+  componentDidMount() {
+    OutgoingCallService.getOutgoingCallTemplateListImport().then(
+      (res) => {
+        this.setState({
+          templateList: res.data,
+        });
+      },
+      (error) => {
+        this.setState({
+          message:
+            (error.response &&
+              error.response.data &&
+              error.response.data.message) ||
+            error.message ||
+            error.toString(),
+        });
+      }
+    );
+  }
+
+  /*Event on file selecting*/
+  fileSelectedHandler(event) {
+    console.log(event.target.files[0]);
+    this.setState({
+      selectedFile: event.target.files[0],
+    });
+  }
+
+  /*Submitting form with all data*/
+  submitForm() {
+    console.log("Upload is triggered");
+
+    const formData = new FormData();
+
+    formData.append("file", this.state.selectedFile);
+    formData.append("templateId", this.state.selectedTemplate);
+    formData.append("name",this.state.listName);
+    formData.append("note",this.state.note);
+
+    if (this.state.selectedFile != null) {
+          OutgoingCallService.postFormData(formData).then(
+          (response) => {
+            this.setState({
+              message: response.data.message,
+            });
+          },
+          (error) => {
+            const resMessage =
+              (error.response &&
+                error.response.data &&
+                error.response.data.message) ||
+                error.message ||
+                error.toString();
+            this.setState({
+              message: resMessage,
+            });
+          }
+        );
+      }
+  }
+
+  /*Handling select onChange*/
+  handleOnChange(event){
+    this.setState({
+      selectedTemplate:event.target.value
+    })
+  }
+
+  handleOldOnChange(event){
+    this.setState({
+      listName:event.target.value,
+    })
+  }
+
+  /*Handling text fields onChange*/
+  handleEvents(event){
+    this.setState({
+      [event.target.name]:event.target.value
+    })
+  }
+
+  /*Handling radio button onChange*/
+  radioBtnOnChange(event){
+    const oldList = event.currentTarget.value === 'true' ? true: false;
+    this.setState({
+      oldList
+    })
+  }
+
+  /*Getting old list names based on the selected template*/
+  showOldLists(){
+    let templateId=0;
+    if(this.state.selectedTemplate===0){ //default vrednost za template
+      templateId=1;
+    }
+    else{
+      templateId=this.state.selectedTemplate;
+      OutgoingCallService.sendTemplateId(templateId).then(
+      (response)=>{
+        this.setState({
+          oldListNames:response.data,
+        });
+      },
+      (error)=>{
+        const resMessage =
+            (error.response &&
+              error.response.data &&
+              error.response.data.message) ||
+            error.message ||
+            error.toString();
+          this.setState({
+            message: resMessage,
+          });
+        }
+      );
+    }
+  }
+
+
+  render() {
+    return (
+      <div className="container">
+        <header className="jumbotron">
+          <h3>{this.state.message}</h3>
+        </header>
+        <Form onSubmit={this.submitForm}>
+          <Form.Row>
+            <Form.Group controlId="template">
+              <Form.Label>Tip odlaznog poziva</Form.Label>
+              <Form.Control as="select" onChange={this.handleOnChange}  value={this.state.selectedTemplate} onClick={this.showOldLists}>
+                {this.state.templateList &&
+                this.state.templateList.length > 0 &&
+                this.state.templateList.map(templateList => {
+                  return <option key={templateList.id} value={templateList.id}>{templateList.name}</option>;
+              })}
+              </Form.Control>
+            </Form.Group>
+          </Form.Row>
+
+          <Form.Row>    
+          <Form.Group controlId="formGridPassword" value={this.state.oldList}>
+            <input type="radio" name="list" value="false" 
+              onChange={this.radioBtnOnChange} /> Nova lista
+              <br></br>
+              <input type="radio" name="list" value="true" 
+              onChange={this.radioBtnOnChange} /> Dopuni listu
+          </Form.Group>
+          </Form.Row>  
+
+
+          {this.state.oldList && this.state.oldListNames.length>0 &&  //ako je izabrano "Dopuni listu" i spisak listi za templejt nije prazan
+          (
+            <Form.Group controlId="template">
+              <Form.Label>Liste odabranog šablona</Form.Label>
+              <Form.Control as="select" onChange={this.handleOldOnChange}  value={this.state.listName}>
+                {this.state.oldListNames &&
+                this.state.oldListNames.length > 0 &&
+                this.state.oldListNames.map(oldListName => {
+                  return <option key={oldListName} value={oldListName}>{oldListName}</option>;
+              })}
+              </Form.Control>
+            </Form.Group>
+          )
+          }
+
+          {this.state.oldList && this.state.oldListNames.length===0 &&  //ako je izabrano "Dopuni listu" a spisak listi za templejt je prazan
+          (
+            <Form.Group controlId="template">
+              <Form.Label>Nema postojećih listi za odabrani šablon.</Form.Label>
+              <InputGroup>
+              <InputGroup.Prepend>
+                <InputGroup.Text>Naziv liste</InputGroup.Text>
+              </InputGroup.Prepend>
+              <FormControl as="textarea" aria-label="text input" onChange={this.handleEvents} value={this.state.listName} name="listName"/>
+            </InputGroup>
+            </Form.Group>
+          )
+          }
+
+          {!this.state.oldList &&  //ako je odabrano "Nova lista"
+          (
+          <Form.Group controlId="description">
+            <InputGroup>
+              <InputGroup.Prepend>
+                <InputGroup.Text>Naziv liste</InputGroup.Text>
+              </InputGroup.Prepend>
+              <FormControl as="textarea" aria-label="text input" onChange={this.handleEvents} value={this.state.listName} name="listName" />
+              <br></br>
+            </InputGroup>
+          </Form.Group>
+          )
+          }
+
+          <Form.Group controlId="description">
+            <InputGroup>
+              <InputGroup.Prepend>
+                <InputGroup.Text>Napomena</InputGroup.Text>
+              </InputGroup.Prepend>
+              <FormControl as="textarea" aria-label="With textarea" onChange={this.handleEvents} value={this.state.note} name="note"/>
+            </InputGroup>
+          </Form.Group>
+
+          <Form.Row>
+            <Form.Group controlId="xlsFile">
+              <Form.Label>Spisak za zvanje</Form.Label>
+              <input
+                type="file"
+                name="file"
+                onChange={this.fileSelectedHandler}
+              />
+            </Form.Group>
+          </Form.Row>
+
+          <Form.Row>
+            <Button variant="success" type="submit">
+              Kreiraj
+            </Button>
+          </Form.Row>
+          <br></br>
+
+          <Form.Row>
+          <Form.Group>
+            <a href={Template} download="template.xlsx" target="_blank">
+              <Button>Preuzmi šablon</Button>
+            </a>
+          </Form.Group>
+          </Form.Row>
+        </Form>
+      </div>
+    );
+  }
+}

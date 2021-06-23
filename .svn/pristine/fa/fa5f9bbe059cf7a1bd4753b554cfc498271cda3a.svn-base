@@ -1,0 +1,145 @@
+import React, { Component } from "react";
+import { Form, InputGroup, Button, FormControl } from "react-bootstrap";
+
+import OutgoingCallService from "../services/outgoing-call.service";
+
+import Template from "./../template-files/Template.xlsx";
+
+export default class OutgoingCallListImport extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      message: "",
+    };
+    this.fileSelectedHandler = this.fileSelectedHandler.bind(this);
+    this.fileUploadHandler = this.fileUploadHandler.bind(this);
+  }
+
+  componentDidMount() {
+    OutgoingCallService.getOutgoingCallListImport().then(
+      (res) => {
+        this.setState({
+          message: res.data,
+          selectedFile: null,
+          isFileSelected: false,
+        });
+      },
+      (error) => {
+        this.setState({
+          message:
+            (error.response &&
+              error.response.data &&
+              error.response.data.message) ||
+            error.message ||
+            error.toString(),
+        });
+      }
+    );
+  }
+
+  fileSelectedHandler(event) {
+    console.log(event.target.files[0]);
+    this.setState({
+      selectedFile: event.target.files[0],
+      isFileSelected: true,
+    });
+  }
+
+  fileUploadHandler() {
+    //salje fajl na backend
+    console.log("Upload is triggered");
+
+    const formData = new FormData();
+
+    formData.append("xlsFile", this.state.selectedFile);
+
+    if (this.state.selectedFile != null) {
+      OutgoingCallService.postExcelFile(formData).then(
+        (response) => {
+          this.setState({
+            message: response.data.message,
+          });
+        },
+        (error) => {
+          const resMessage =
+            (error.response &&
+              error.response.data &&
+              error.response.data.message) ||
+            error.message ||
+            error.toString();
+          this.setState({
+            message: resMessage,
+          });
+        }
+      );
+    }
+
+    console.log(this.state.message);
+  }
+
+  render() {
+    return (
+      <div className="container">
+        <header className="jumbotron">
+          <h3>{this.state.message}</h3>
+        </header>
+        <Form onSubmit={this.fileUploadHandler}>
+          <Form.Row>
+            <Form.Group controlId="template">
+              <Form.Label>Tip odlaznog poziva</Form.Label>
+              <Form.Control as="select" defaultValue="Izaberi...">
+                <option>Neplatise</option>
+                <option>Test</option>
+              </Form.Control>
+            </Form.Group>
+
+            {/* <Form.Group controlId="formGridPassword">
+              <Form.Label>Opcije uvoza</Form.Label>
+              <Radio name="groupOptions">Nova lista</Radio>
+              <Radio name="groupOptions">Dodaj na postojecu listu</Radio>
+            </Form.Group> */}
+          </Form.Row>
+
+          <Form.Group controlId="listName">
+            <Form.Label>Naziv liste</Form.Label>
+          </Form.Group>
+
+          <Form.Group controlId="description">
+            <InputGroup>
+              <InputGroup.Prepend>
+                <InputGroup.Text>Napomena</InputGroup.Text>
+              </InputGroup.Prepend>
+              <FormControl as="textarea" aria-label="With textarea" />
+            </InputGroup>
+          </Form.Group>
+
+          <Form.Row>
+            <Form.Group controlId="xlsFile">
+              <Form.Label>Spisak za zvanje</Form.Label>
+              <input
+                type="file"
+                name="file"
+                onChange={this.fileSelectedHandler}
+              />
+              {/* <div>
+                <button onClick={this.fileUploadHandler} type="submit">
+                  Submit
+                </button>
+              </div> */}
+            </Form.Group>
+          </Form.Row>
+
+          <Button variant="primary" type="submit">
+            Uvezi
+          </Button>
+
+          <Form.Group>
+            <a href={Template} download="template.xlsx" target="_blank">
+              <Button>Preuzmi sablon</Button>
+            </a>
+          </Form.Group>
+        </Form>
+      </div>
+    );
+  }
+}

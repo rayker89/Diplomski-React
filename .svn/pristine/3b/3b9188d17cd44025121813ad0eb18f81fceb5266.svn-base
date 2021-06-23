@@ -1,0 +1,224 @@
+import React, { Component } from "react";
+import BootstrapTable from 'react-bootstrap-table-next';
+import "react-bootstrap-table-next/dist/react-bootstrap-table2.css";
+import OutgoingCallService from "../services/outgoing-call.service";
+import OutgoingCallTemplateCreate from "./outgoing-call-template-create";
+import template_activated from "../icons/template_activated.png";
+import template_deactivated from "../icons/template_deactivated.png";
+
+
+
+export default class OutgoingCallTemplate extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      template: [],
+      columns: [{
+        headerStyle: (colum, colIndex) => {
+          return { width: '10%'};
+        },
+        dataField: 'id',
+        text: 'R.br.'
+      },
+      {
+        headerStyle: (colum, colIndex) => {
+          return { width: '12%'};
+        },
+        dataField: 'active',
+        text: 'Aktivan',
+        formatter: this.isActive
+      }, {
+        headerStyle: (colum, colIndex) => {
+          return { width: '45%'};
+        },
+        dataField: 'name',
+        text: 'Naziv'
+      }, {
+        headerStyle: (colum, colIndex) => {
+          return { width: '14%'};
+        },
+        dataField: 'actions',
+        text: 'Akcije',
+        isDummyField: true,
+        formatter: this.deleteAction
+      } 
+      ],
+      showOutgoingCallTemplateCreate: false
+    }
+    this.showHideTemplate = this.showHideTemplate.bind(this);
+    this.onAddTemplate = this.onAddTemplate.bind(this);
+    this.onDeleteTemplate = this.onDeleteTemplate.bind(this);
+    this.onDeletePredefinedResult = this.onDeletePredefinedResult.bind(this);
+    this.onAddPredefinedResult = this.onAddPredefinedResult.bind(this);
+  };
+
+  onDeleteTemplate(row, rowIndex) {
+    OutgoingCallService.deleteTemplate(row.id);
+    let template = [...this.state.template]
+    template.splice(rowIndex, 1)
+    this.setState({ 
+      template: template
+    })
+  }
+
+  isActive= (cell, row, rowIndex, formatExtraData) => {
+    if(row.active === 1) {
+      return (
+        <img src = {template_activated} alt="Aktivan" >
+        </img>
+      );
+    } else {
+      return (
+        <img src = {template_deactivated} alt="Aktivan" >
+        </img>
+      );
+    }
+    
+  };
+
+  onAddTemplate() {
+    OutgoingCallService.getOutgoingCallTemplate()
+    .then(res => {
+      this.setState({ template: res.data });
+    })
+    .catch(function (error) {
+      console.log(error);
+    })
+  }
+
+  onDeletePredefinedResult(templateId, resultIndex,template) {
+    let templ = [...this.state.template]
+    console.log('KeyField: ', templateId)
+    console.log('templejt', template)
+    templ[templateId].predefinedResultList.splice(resultIndex, 1)
+    this.setState({ 
+      template: templ
+    })
+    OutgoingCallService.deletePredefinedResult(template);
+
+  }
+  
+  deleteAction = (cell, row, rowIndex, formatExtraData) => {
+    return (
+      <button className="btn btn-danger" 
+        onClick={() => {
+          this.onDeleteTemplate(row, rowIndex);
+        }}
+      >
+        Ukloni
+      </button>
+    );
+  };
+
+  onAddPredefinedResult = (event, templateId) => {
+    console.log('Event: ', event);
+    if (event.charCode === 13) {
+      event.preventDefault();
+        let templ = [...this.state.template]
+         templ[templateId].predefinedResultList = [...templ[templateId].predefinedResultList, event.target.value];
+        this.setState({ template: templ });
+        OutgoingCallService.addPredefinedResult(templ[templateId]);
+        event.target.value = '';
+    }
+  }
+  
+  showHideTemplate() {
+    /* this.props.history.push('/outgoingCallTemplate/new'); */
+    this.setState({showOutgoingCallTemplateCreate: !this.state.showOutgoingCallTemplateCreate});
+  };
+
+  componentDidMount() {
+    OutgoingCallService.getOutgoingCallTemplate()
+      .then(res => {
+        this.setState({ template: res.data });
+      })
+      .catch(function (error) {
+        console.log(error);
+      })
+  };
+
+  
+
+  render() {
+    const expandRow = {
+      showExpandColumn: true,
+      onlyOneExpanding: true,
+      expandByColumnOnly: true,
+      expandColumnPosition: 'right',
+      expandHeaderColumnRenderer: ({ isAnyExpands }) => {
+        if (isAnyExpands) {
+          return (
+            <button className="btn btn-warning">Nazad</button>
+          );
+        }
+        return (
+          <button className="btn btn-info">Odgovori</button>
+        );
+      },
+      expandColumnRenderer: ({ expanded }) => {
+        if (expanded) {
+          return (
+            <button className="btn btn-warning">Nazad</button>
+          );
+        }
+        return (
+          <button className="btn btn-info">Odgovori</button>
+        );
+      },
+    
+      renderer: (row,rowIndex) => 
+      <div>
+      <table>
+        <tbody>
+        {row.predefinedResultList.map((item,index) =>
+          <tr key={index}>
+            <td>{item}</td>
+            <td> <button 
+            className="btn btn-danger"
+            onClick={() => {
+              this.onDeletePredefinedResult(rowIndex, index, row);
+            }}> Ukloni</button>
+            </td>
+          </tr>
+        )}
+      </tbody>
+      </table>
+            <div>
+              <input placeholder="Novi odgovor..." type = "text" id="New"  onKeyPress={e => this.onAddPredefinedResult(e, rowIndex)} />
+            </div>
+      </div>
+     
+
+    }
+
+    const {showOutgoingCallTemplateCreate} = this.state;
+    console.log('showOutgoingCallTemplateCreate', showOutgoingCallTemplateCreate);
+    return (
+      <div className = "container col-md-8 offset-md-1">
+        <p className="Table-header">Templejti odlaznih poziva</p>
+
+        <div>
+          {!showOutgoingCallTemplateCreate ? 
+          <button className="btn btn-primary" onClick={this.showHideTemplate}>Add Template</button> :
+          <button className="btn btn-danger" onClick={this.showHideTemplate}>Cancel</button>}  
+        </div>
+        <br></br>
+        <div>
+          { showOutgoingCallTemplateCreate && <OutgoingCallTemplateCreate onAddTemplate={this.onAddTemplate} showHideTempalte={this.showHideTemplate}/>}
+        </div>
+        <BootstrapTable
+          keyField='id'
+          data={this.state.template}
+          columns={this.state.columns}
+          expandRow={expandRow}
+          striped
+          bordered
+          bootstrap4
+          size="sm" />
+      </div>
+    );
+  }
+}
+
+

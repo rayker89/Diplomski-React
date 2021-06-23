@@ -1,0 +1,144 @@
+import React, { Component } from "react";
+import BootstrapTable from 'react-bootstrap-table-next';
+import "react-bootstrap-table-next/dist/react-bootstrap-table2.css";
+import OutgoingCallService from "../services/outgoing-call.service";
+
+
+
+export default class OutgoingCallTemplate extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      template: [],
+      columns: [{
+        headerStyle: (colum, colIndex) => {
+          return { width: '15%'};
+        },
+        dataField: 'id',
+        text: 'R.br.',
+        sort: true
+      }, {
+        headerStyle: (colum, colIndex) => {
+          return { width: '55%'};
+        },
+        dataField: 'name',
+        text: 'Naziv',
+        sort: true
+      },{
+        headerStyle: (colum, colIndex) => {
+          return { width: '14%'};
+        },
+        dataField: 'actions',
+        text: 'Akcije',
+        isDummyField: true,
+        formatter: this.deleteAction
+      } 
+      ]
+    }
+    this.addTemplate = this.addTemplate.bind(this);
+    this.onDeleteTemplate = this.onDeleteTemplate.bind(this);
+  };
+
+  onDeleteTemplate(row, rowIndex) {
+    OutgoingCallService.deleteTemplate(row.id);
+    let template = [...this.state.template]
+    template.splice(rowIndex, 1)
+    this.setState({ 
+      template: template
+    })
+  }
+  
+  deleteAction = (cell, row, rowIndex, formatExtraData) => {
+    return (
+      <button className="btn btn-danger" 
+        onClick={() => {
+          this.onDeleteTemplate(row, rowIndex);
+        }}
+      >
+        Ukloni
+      </button>
+    );
+  };
+  
+  addTemplate() {
+    this.props.history.push('/outgoingCallTemplate/new');
+  };
+
+  componentDidMount() {
+    OutgoingCallService.getOutgoingCallTemplate()
+      .then(res => {
+        this.setState({ template: res.data });
+      })
+      .catch(function (error) {
+        console.log(error);
+      })
+  };
+
+  render() {
+    return (
+      <div className = "container col-md-8 offset-md-1">
+        <p className="Table-header">Templejti odlaznih poziva</p>
+
+        <div>
+          <button className="btn btn-primary" onClick={this.addTemplate}> Add Template</button>
+        </div>
+        <br></br>
+        <BootstrapTable
+          keyField='id'
+          data={this.state.template}
+          columns={this.state.columns}
+          expandRow={expandRow}
+          striped
+          bordered
+          bootstrap4
+          size="sm" />
+      </div>
+    );
+  }
+}
+const expandRow = {
+  showExpandColumn: true,
+  onlyOneExpanding: true,
+  expandByColumnOnly: true,
+  expandColumnPosition: 'right',
+  expandHeaderColumnRenderer: ({ isAnyExpands }) => {
+    if (isAnyExpands) {
+      return (
+        <button className="btn btn-warning">Nazad</button>
+      );
+    }
+    return (
+      <button className="btn btn-info">Odgovori</button>
+    );
+  },
+  expandColumnRenderer: ({ expanded }) => {
+    if (expanded) {
+      return (
+        <button className="btn btn-warning">Nazad</button>
+      );
+    }
+    return (
+      <button className="btn btn-info">Odgovori</button>
+    );
+  },
+
+  renderer: row => <table>
+    {row.predefinedResultList.map((item =>
+      <tr key={item}>
+        <td>{item}</td>
+        <td> <button className="btn btn-danger">Ukloni</button></td>
+      </tr>
+    ))}
+
+    <tr>
+      <div>
+        <input placeholder="Novi odgovor..." >
+        </input>
+      </div>
+
+    </tr>
+
+  </table>
+}
+

@@ -1,0 +1,154 @@
+import React, { Component } from "react";
+import OutgoingCallService from "../services/outgoing-call.service";
+
+export default class OutgoingCallTemplateCreate extends Component {
+
+    constructor(props) {
+        super(props)
+
+        this.state = {
+            name: '',
+            predefinedResultList: [''],
+            errors: {}
+        }
+        this.changeNameHandler = this.changeNameHandler.bind(this);
+        this.saveTemplate = this.saveTemplate.bind(this);
+        this.addClick = this.addClick.bind(this);
+    }
+
+    componentDidMount() {
+
+    }
+
+    createUI() {
+        return this.state.predefinedResultList.map((el, i) =>
+            <div className="form-group" key={i}>
+                <div className="form-row">
+                    <div className="col">
+                        <input
+                            type="text" value={el || ''}
+                            onChange={this.handleChange.bind(this, i)}
+                            className="form-control"
+                            required />
+                    </div>
+
+
+                    <button
+                        className="btn btn-danger"
+                        onClick={this.removeClick.bind(this, i)}>
+                        Ukloni
+                        </button>
+                </div>
+
+            </div>
+        )
+    }
+
+    handleValidation(){
+        let name = this.state.name;
+        let errors = {};
+        let formIsValid = true;
+
+        //Name
+        if(!name){
+           formIsValid = false;
+           errors["name"] = "Novi templejt mora da sadrzi Naziv!";
+        }
+        if(this.state.predefinedResultList.length < 2) {
+            formIsValid = false;
+            errors["results"] = "Unesite najmanje 2 odgovora";
+        }
+       this.setState({errors: errors});
+       return formIsValid;
+   }
+
+    saveTemplate = (templ) => {
+        templ.preventDefault();
+        if(this.handleValidation()){
+            let template = { name: this.state.name, predefinedResultList: this.state.predefinedResultList };
+            console.log('template => ' + JSON.stringify(template));
+            
+                OutgoingCallService.createTemplate(template).then(res => {
+                    this.props.onAddTemplate();
+                    this.props.showHideTempalte();
+                }); 
+         }else{
+            
+         }
+
+    }
+
+    changeNameHandler = (event) => {
+        event.preventDefault();
+        let errors = {}
+        errors["name"] = "";
+        this.setState({ name: event.target.value, errors: errors });
+    }
+
+
+    handleChange(i, event) {
+        event.preventDefault();
+        let predefinedResultList = [...this.state.predefinedResultList];
+        predefinedResultList[i] = event.target.value;
+        this.setState({ predefinedResultList });
+    }
+
+    addClick = (event) => {
+        event.preventDefault();
+        let predefinedResultList = this.state.predefinedResultList;
+        let errors = {}
+        predefinedResultList = [...predefinedResultList, ''];
+        this.setState({ predefinedResultList, errors: errors});
+    }
+
+    removeClick(i, event) {
+        event.preventDefault();
+        let predefinedResultList = [...this.state.predefinedResultList];
+        predefinedResultList.splice(i, 1);
+        this.setState({ predefinedResultList });
+    }
+
+
+    getTitle() {
+
+        return <h3 className="text-center">Dodaj novi sablon</h3>
+
+    }
+    render() {
+        return (
+            <div>
+                <br></br>
+                <div className="container">
+                    <div className="row">
+                        <div className="card col-md-10">
+                            {
+                                this.getTitle()
+                            }
+                            <div className="card-body">
+                                <form>
+                                    <div className="form-group">
+                                        <label> Naziv: </label>
+                                        <span style={{color: "red"}}>{this.state.errors["name"]}</span>
+                                        <input placeholder="Naziv" name="name" className="form-control"
+                                            value={this.state.name} onChange={this.changeNameHandler} />
+                                    </div>
+                                    <div className="form-group">
+                                        <label > Odgovori: </label>
+                                        <button className="btn btn-primary" onClick={this.addClick}> Dodaj </button>
+                                        <span style={{color: "red"}}>{this.state.errors["results"]}</span>
+                                    </div>
+
+                                    {this.createUI()}
+
+                                    <button className="btn btn-success" onClick={this.saveTemplate}>Save</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        )
+    }
+
+}
