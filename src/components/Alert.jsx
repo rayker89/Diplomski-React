@@ -44,7 +44,7 @@ class Alert extends React.Component {
 
                 // auto close alert if required
                 if (alert.autoClose) {
-                    setTimeout(() => this.removeAlert(alert), 3000);
+                    setTimeout(() => this.removeAlert(alert), 5000);
                 }
             });
 

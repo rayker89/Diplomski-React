@@ -2,8 +2,8 @@ import React, { Component } from "react";
 import { Switch, Route, Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
-import { history } from './helpers/history';
 import AuthService from "./services/auth.service";
+import 'bootstrap';
 import { Alert } from './components/Alert';
 import Login from "./components/login.component";
 import Register from "./components/register.component";
@@ -12,8 +12,20 @@ import Profile from "./components/profile.component";
 import BoardUser from "./components/board-user.component";
 import BoardModerator from "./components/board-moderator.component";
 import BoardAdmin from "./components/board-admin.component";
-import OutgoingCallTemplate from "./components/outgoing-call-template"
-import OutgoingCallListImport from "./components/outgoing-call-list-import";
+import Packages from "./components/packages.component";
+import PackageList from "./components/packages-list-component";
+import PriceCreate from "./components/prices.component";
+import PriceList from "./components/prices-list-component";
+import ClientCreate from "./components/clients.component";
+import ClientList from "./components/clients-list-component";
+import AgreementCreate from "./components/agreement.component";
+import AgreementList from "./components/agreement-list-component";
+import OperatortsList from "./components/operators-list-component";
+import OperatorCreate from "./components/operators.component";
+import TechnicianTMAgreementList from "./components/technician-TM-agreement-list";
+import SalesSigningAgreementList from "./components/sales-signing-agreement-list";
+import TechnicianRealizationAgreementList from "./components/technician-realization-agreementt-list";
+import AgreementInfo from "./components/agreement-info-component";
 
 class App extends Component {
   constructor(props) {
@@ -23,7 +35,10 @@ class App extends Component {
     this.state = {
       showModeratorBoard: false,
       showAdminBoard: false,
+      showTechnicianBoard: false,
       currentUser: undefined,
+      showUserBoard: false,
+      showSalesBoard: false
     };
   }
 
@@ -35,6 +50,9 @@ class App extends Component {
         currentUser: user,
         showModeratorBoard: user.roles.includes("ROLE_MODERATOR"),
         showAdminBoard: user.roles.includes("ROLE_ADMIN"),
+        showTechnicianBoard: user.roles.includes("ROLE_TECHNICIAN"),
+        showSalesBoard: user.roles.includes("ROLE_SALES"),
+        showUserBoard: user.roles.includes("ROLE_USER")
       });
     }
   }
@@ -44,52 +62,91 @@ class App extends Component {
   }
 
   render() {
-    const { currentUser, showModeratorBoard, showAdminBoard } = this.state;
+    const { currentUser, showModeratorBoard, showAdminBoard, showTechnicianBoard,  showSalesBoard, showUserBoard} = this.state;
 
     return (
       <div>
-        <nav className="navbar navbar-expand navbar-dark bg-dark">
+        <nav  className="navbar navbar-expand navbar-dark bg-dark sticky-top" >
           <Link to={"/home"} className="navbar-brand">
-            CalLibri
+            inter.NET
           </Link>
           <div className="navbar-nav mr-auto">
-            {/* <li className="nav-item">
-              <Link to={"/home"} className="nav-link">
-              Templejti odlaznih poziva
-              </Link>
-            </li> */}
-
-            {showModeratorBoard && (
-              <li className="nav-item">
-                <Link to={"/mod"} className="nav-link">
-                  Moderator Board
-                </Link>
-              </li>
+            {showAdminBoard && ( <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+         Paketi
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+          <a class="dropdown-item" href="#packagesList">Lista paketa</a>
+          <a class="dropdown-item" href="#addPackage">Dodaj novi paket</a>
+        </div>
+      </li>
             )}
 
-            {showAdminBoard && (
-              <li className="nav-item">
-                <Link to={"/admin"} className="nav-link">
-                  Admin Board
-                </Link>
-              </li>
+          {showAdminBoard && ( <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+         Cenovnici
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+          <a class="dropdown-item" href="#pricesList">Lista cenovnika</a>
+          <a class="dropdown-item" href="#addPrice">Dodaj novi cenovnik</a>
+        </div>
+      </li>
             )}
 
-            {currentUser && (
-              <li className="nav-item">
-                <Link to={"/outgoingCallTemplate"} className="nav-link">
-                Templejti odlaznih poziva
-                </Link>
-              </li>
+          {(showAdminBoard || showSalesBoard) && ( <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+         Korisnici
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+          <a class="dropdown-item" href="#clientsList">Lista korisnika</a>
+          <a class="dropdown-item" href="#addClient">Dodaj novog korisnika</a>
+        </div>
+      </li>
             )}
 
-            {currentUser && (
-              <li className="nav-item">
-                <Link to={"/outgoingCallListImport"} className="nav-link">
-                Kreiranje liste za zvanje 
-                </Link>
-              </li>
+          {showAdminBoard && ( <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+         Operateri
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+          <a class="dropdown-item" href="#operatersList">Lista operatera</a>
+          <a class="dropdown-item" href="#addOperator">Dodaj novog operatera</a>
+        </div>
+      </li>
             )}
+
+
+          {(currentUser) && ( <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+         Ugovori
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+          <a class="dropdown-item" href="#agreementsList">Lista ugovora</a>
+        </div>
+      </li>
+            )}
+
+      {(showTechnicianBoard || showAdminBoard) && ( <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+         Tehnicarski meni
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+          <a class="dropdown-item" href="#techAgreementsTMList">Tehnicke mogucnosti</a>
+          <a class="dropdown-item" href="#techAgreementsRealizationList">Realizacija</a>
+        </div>
+      </li>
+            )}
+
+      {(showSalesBoard || showAdminBoard) && ( <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+         Prodaja meni
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+          <a class="dropdown-item" href="#addAgreement">Kreiraj novi ugovor</a>
+          <a class="dropdown-item" href="#salesAgreementsSigningList">Potpisivanje</a>
+        </div>
+      </li>
+            )}  
 
           </div>
 
@@ -123,8 +180,11 @@ class App extends Component {
           )}
         </nav>
 
-        <div className="container mt-3">
-        <Alert />
+        <div className="container-fluid">
+        <div className="sticky-top">
+        <Alert  />
+        </div>
+          
           <Switch>
             <Route exact path={["/", "/home"]} component={Home} />
             <Route exact path="/login" component={Login} />
@@ -133,8 +193,22 @@ class App extends Component {
             <Route path="/user" component={BoardUser} />
             <Route path="/mod" component={BoardModerator} />
             <Route path="/admin" component={BoardAdmin} />
-            <Route history={history} exact path="/outgoingCallTemplate" component={OutgoingCallTemplate} />
-            <Route path="/outgoingCallListImport" component={OutgoingCallListImport} />
+
+            <Route path="/addPackage" component={Packages} />
+            <Route path="/packagesList" component={PackageList} />  
+            <Route path="/addPrice" component={PriceCreate} />
+            <Route path="/pricesList" component={PriceList} />
+            <Route path="/addClient" component={ClientCreate}/>
+            <Route path="/clientsList" component={ClientList}/>
+            <Route path="/addOperator" component={OperatorCreate}/>
+            <Route path="/operatersList" component={OperatortsList}/>
+            <Route path="/addAgreement" component={AgreementCreate}/>
+            <Route path="/agreementsList" component={AgreementList}/>
+            <Route path="/techAgreementsTMList" component={TechnicianTMAgreementList}/>
+            <Route path="/salesAgreementsSigningList" component={SalesSigningAgreementList}/>
+            <Route path="/techAgreementsRealizationList" component={TechnicianRealizationAgreementList}/>
+
+            <Route path="/agreementInfo/:agreementId" component={AgreementInfo} />
           </Switch>
         </div>
       </div>
